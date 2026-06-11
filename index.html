@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>In Memoriam | Psi Upsilon Fraternity</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #8B6914;
+    --gold-light: #C9A84C;
+    --gold-pale: #F5EDD5;
+    --cream: #FAF8F3;
+    --ink: #1C1A17;
+    --muted: #6B6456;
+    --rule: #D4C4A0;
+    --card-bg: #FFFFFF;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Lato', sans-serif;
+    background-color: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  header {
+    background-color: #1a1510;
+    color: #F5EDD5;
+    text-align: center;
+    padding: 3.5rem 2rem 3rem;
+    border-bottom: 3px solid var(--gold-light);
+  }
+
+  header::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 1px;
+    background: var(--gold-light);
+    margin: 1.5rem auto 0;
+    opacity: 0.5;
+  }
+
+  .greek-letters {
+    font-family: 'EB Garamond', serif;
+    font-size: 1rem;
+    letter-spacing: 0.35em;
+    color: var(--gold-light);
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+    opacity: 0.85;
+  }
+
+  header h1 {
+    font-family: 'EB Garamond', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    color: #F5EDD5;
+    line-height: 1.15;
+    margin-bottom: 1rem;
+  }
+
+  header p.subtitle {
+    font-size: 0.9rem;
+    letter-spacing: 0.12em;
+    color: var(--gold-light);
+    text-transform: uppercase;
+    font-weight: 300;
+    opacity: 0.8;
+  }
+
+  .epigraph {
+    text-align: center;
+    padding: 2.5rem 2rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .epigraph blockquote {
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 1.2rem;
+    color: var(--muted);
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  .controls {
+    max-width: 1100px;
+    margin: 2rem auto 0;
+    padding: 0 2rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .controls-left {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .search-box { position: relative; }
+
+  .search-box input {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.875rem;
+    border: 1px solid var(--rule);
+    background: white;
+    color: var(--ink);
+    padding: 0.55rem 1rem 0.55rem 2.4rem;
+    border-radius: 4px;
+    width: 220px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-box input:focus { border-color: var(--gold); }
+
+  .search-box svg {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    width: 15px;
+    height: 15px;
+  }
+
+  .filter-select {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.875rem;
+    border: 1px solid var(--rule);
+    background: white;
+    color: var(--ink);
+    padding: 0.55rem 2rem 0.55rem 0.9rem;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B6456' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    transition: border-color 0.2s;
+  }
+
+  .filter-select:focus { border-color: var(--gold); }
+
+  .count-label {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    align-self: center;
+    margin-left: auto;
+  }
+
+  .grid {
+    max-width: 1100px;
+    margin: 1.5rem auto 4rem;
+    padding: 0 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid #E8DFC8;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: box-shadow 0.25s, transform 0.2s;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card:hover {
+    box-shadow: 0 6px 24px rgba(139,105,20,0.12);
+    transform: translateY(-2px);
+  }
+
+  .card-photo {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+  }
+
+  .card-photo-placeholder {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(160deg, #EDE4CC 0%, #D4C4A0 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .initials-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.45);
+    border: 1.5px solid rgba(176,152,96,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'EB Garamond', serif;
+    font-size: 1.6rem;
+    color: #8B6914;
+  }
+
+  .card-body {
+    padding: 1.25rem 1.4rem 1.4rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-name {
+    font-family: 'EB Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.25;
+    margin-bottom: 0.25rem;
+  }
+
+  .card-nickname {
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+
+  .card-chapter {
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 0.9rem;
+  }
+
+  .card-meta { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; }
+
+  .card-meta-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .meta-label {
+    color: var(--muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    min-width: 68px;
+    font-weight: 300;
+  }
+
+  .meta-value { color: var(--ink); }
+
+  .divider { height: 1px; background: #EDE4CC; margin: 1rem 0 0.9rem; }
+
+  .obit-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: color 0.15s;
+  }
+
+  .obit-link:hover { color: #5A4209; }
+  .obit-link svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+  .status-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 2rem;
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 1.2rem;
+    color: var(--muted);
+  }
+
+  .status-message.error { color: #993C1D; font-style: normal; }
+
+  .spinner {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--rule);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 1rem;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 1.2rem;
+  }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.8rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+
+  @media (max-width: 600px) {
+    .controls { flex-direction: column; align-items: stretch; }
+    .controls-left { flex-direction: column; }
+    .search-box input { width: 100%; }
+    .count-label { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="greek-letters">Psi Upsilon Fraternity</div>
+  <h1>In Memoriam</h1>
+  <p class="subtitle">Honoring Our Brothers</p>
+</header>
+
+<div class="epigraph">
+  <blockquote>
+    "Though they are gone, they are not forgotten — their fellowship endures in the bonds of our brotherhood."
+  </blockquote>
+</div>
+
+<div class="controls">
+  <div class="controls-left">
+    <div class="search-box">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search" placeholder="Search by name…" aria-label="Search members">
+    </div>
+    <select class="filter-select" id="chapterFilter" aria-label="Filter by chapter">
+      <option value="">All chapters</option>
+    </select>
+    <select class="filter-select" id="sortOrder" aria-label="Sort order">
+      <option value="notification">Sort: Recently added</option>
+      <option value="name">Sort: Name A–Z</option>
+      <option value="year">Sort: Class year</option>
+      <option value="deceased">Sort: Date deceased</option>
+    </select>
+  </div>
+  <span class="count-label" id="countLabel"></span>
+</div>
+
+<div class="grid" id="grid" role="list">
+  <div class="status-message">
+    <div class="spinner"></div><br>Loading roster…
+  </div>
+</div>
+
+<footer>
+  &copy; Psi Upsilon Fraternity &nbsp;·&nbsp; In loving memory
+</footer>
+
+<script>
+/*
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║              CONFIGURATION — EDIT ONLY THIS SECTION             ║
+  ║                                                                  ║
+  ║  Paste your published Google Sheet CSV URL below.               ║
+  ║                                                                  ║
+  ║  HOW TO GET YOUR URL:                                           ║
+  ║  1. Open your Google Sheet                                      ║
+  ║  2. File → Share → Publish to web                               ║
+  ║  3. Choose your sheet tab, select "Comma-separated values"      ║
+  ║  4. Click Publish, copy the URL, paste it below                 ║
+  ╚══════════════════════════════════════════════════════════════════╝
+*/
+
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS27pm05qlWhwdtYPPXILVsHqgxnqL3kzzwlWbEALRM5OzNpd1xfoTR__i8hZheBsNRjkpUfOd9ibDP/pub?output=csv";
+
+/* ── NO EDITS NEEDED BELOW THIS LINE ── */
+
+let allMembers = [];
+
+// Build display name: full legal name + (Nickname) if present
+// e.g. "Dr. James Robert Williams Jr. (Jim)"
+function buildDisplayName(m) {
+  const parts = [m.title, m.firstName, m.middleName, m.lastName, m.suffix]
+    .map(p => (p || '').trim())
+    .filter(Boolean);
+  let name = parts.join(' ');
+  if (m.nickname) name += ` (${m.nickname})`;
+  return name;
+}
+
+// Initials from first + last name for placeholder
+function initials(m) {
+  const first = (m.firstName || m.lastName || '?')[0].toUpperCase();
+  const last  = m.lastName ? m.lastName[0].toUpperCase() : '';
+  return last ? first + last : first;
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  // Parse a single CSV line respecting quoted fields
+  function parseLine(line) {
+    const cols = [];
+    let inQuote = false, cur = '';
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQuote = !inQuote; }
+      else if (ch === ',' && !inQuote) { cols.push(cur.trim()); cur = ''; }
+      else { cur += ch; }
+    }
+    cols.push(cur.trim());
+    return cols.map(c => c.replace(/^"|"$/g, '').trim());
+  }
+
+  const headers = parseLine(lines[0]).map(h => h.toLowerCase().trim());
+
+  function col(obj, ...keys) {
+    for (const k of keys) {
+      const val = obj[k.toLowerCase().trim()];
+      if (val !== undefined && val !== '') return val;
+    }
+    return '';
+  }
+
+  return lines.slice(1).map(line => {
+    const vals = parseLine(line);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = vals[i] || ''; });
+
+    return {
+      title:               col(obj, 'title'),
+      firstName:           col(obj, 'first name', 'firstname', 'first'),
+      middleName:          col(obj, 'middle name', 'middlename', 'middle'),
+      lastName:            col(obj, 'last name', 'lastname', 'last'),
+      suffix:              col(obj, 'suffix'),
+      nickname:            col(obj, 'nickname', 'nick'),
+      membershipId:        col(obj, 'id', 'membershipid', 'membership id'),  // internal, not shown
+      chapter:             col(obj, 'chapter'),
+      classYear:           col(obj, 'class', 'classyear', 'class year'),
+      birthDate:           col(obj, 'birth date', 'birthdate', 'dob'),
+      deceased:            col(obj, 'date deceased', 'datedeceased', 'deceased'),
+      deceasedISO:         col(obj, 'date deceased', 'datedeceased', 'deceased'),  // same field, used for sorting
+      obituaryUrl:         col(obj, 'obit summary-equals obit link', 'obituaryurl', 'obit link', 'obituary link'),
+      photo:               col(obj, 'obituary photo link', 'photo', 'photourl', 'photo link'),
+      note:                col(obj, 'note', 'notes', 'tribute'),
+      notificationDate:    col(obj, 'deceased notification', 'deceasednotification', 'notification'),  // internal, drives sort
+    };
+  }).filter(m => m.firstName || m.lastName);
+}
+
+function buildCard(m) {
+  const displayName = buildDisplayName(m);
+  const hasPhoto    = m.photo !== '';
+  const hasObit     = m.obituaryUrl !== '';
+  const init        = initials(m);
+
+  const photoHTML = hasPhoto
+    ? `<img class="card-photo" src="${m.photo}" alt="Photo of ${displayName}" loading="lazy"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      + `<div class="card-photo-placeholder" style="display:none"><div class="initials-circle">${init}</div></div>`
+    : `<div class="card-photo-placeholder"><div class="initials-circle">${init}</div></div>`;
+
+  const rows = [];
+  if (m.chapter)   rows.push(`<div class="card-meta-row"><span class="meta-label">Chapter</span><span class="meta-value">${m.chapter}</span></div>`);
+  if (m.classYear) rows.push(`<div class="card-meta-row"><span class="meta-label">Class</span><span class="meta-value">${m.classYear}</span></div>`);
+  if (m.birthDate) rows.push(`<div class="card-meta-row"><span class="meta-label">Born</span><span class="meta-value">${m.birthDate}</span></div>`);
+  if (m.deceased)  rows.push(`<div class="card-meta-row"><span class="meta-label">Passed</span><span class="meta-value">${m.deceased}</span></div>`);
+
+  const obitHTML = hasObit
+    ? `<div class="divider"></div>
+       <a class="obit-link" href="${m.obituaryUrl}" target="_blank" rel="noopener">
+         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+           <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+         </svg>
+         Read obituary
+       </a>` : '';
+
+  const noteHTML = m.note
+    ? `<p style="font-family:'EB Garamond',serif;font-style:italic;font-size:0.92rem;color:var(--muted);margin-top:0.6rem;line-height:1.55;">"${m.note}"</p>`
+    : '';
+
+  return `
+    <article class="card" role="listitem">
+      ${photoHTML}
+      <div class="card-body">
+        <h2 class="card-name">${displayName}</h2>
+        ${m.chapter ? `<p class="card-chapter">${m.chapter}</p>` : ''}
+        <div class="card-meta">${rows.join('')}</div>
+        ${noteHTML}
+        ${obitHTML}
+      </div>
+    </article>`;
+}
+
+function populate() {
+  const search  = document.getElementById('search').value.toLowerCase().trim();
+  const chapter = document.getElementById('chapterFilter').value;
+  const sort    = document.getElementById('sortOrder').value;
+
+  let filtered = allMembers.filter(m => {
+    const fullName     = buildDisplayName(m).toLowerCase();
+    const matchSearch  = !search || fullName.includes(search) || (m.chapter||'').toLowerCase().includes(search);
+    const matchChapter = !chapter || m.chapter === chapter;
+    return matchSearch && matchChapter;
+  });
+
+  filtered.sort((a, b) => {
+    if (sort === 'name') {
+      return (a.lastName||'').localeCompare(b.lastName||'') ||
+             (a.firstName||'').localeCompare(b.firstName||'');
+    }
+    if (sort === 'year')     return (a.classYear||'').localeCompare(b.classYear||'');
+    if (sort === 'deceased') return (b.deceasedISO||'0000-00-00').localeCompare(a.deceasedISO||'0000-00-00');
+    if (sort === 'notification') {
+      // Most recently notified first; blank notification dates go to the end
+      const na = a.notificationDate || '0000-00-00';
+      const nb = b.notificationDate || '0000-00-00';
+      return nb.localeCompare(na);
+    }
+    return 0;
+  });
+
+  const grid  = document.getElementById('grid');
+  const label = document.getElementById('countLabel');
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<p class="empty-state">No members found matching your search.</p>';
+    label.textContent = '';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(buildCard).join('');
+  label.textContent = `${filtered.length} member${filtered.length !== 1 ? 's' : ''}`;
+}
+
+function buildFilters() {
+  const chapters = [...new Set(allMembers.map(m => m.chapter).filter(Boolean))].sort();
+  const sel = document.getElementById('chapterFilter');
+  chapters.forEach(ch => {
+    const opt = document.createElement('option');
+    opt.value = ch; opt.textContent = ch;
+    sel.appendChild(opt);
+  });
+}
+
+async function loadData() {
+  const grid = document.getElementById('grid');
+
+  if (!SHEET_CSV_URL || SHEET_CSV_URL.includes('PASTE_YOUR')) {
+    grid.innerHTML = `<div class="status-message error">
+      ⚠️ No Google Sheet connected yet.<br><br>
+      <span style="font-size:0.95rem;">Open this HTML file, find the <strong>SHEET_CSV_URL</strong> variable near the top of the script, and paste your published CSV URL there.</span>
+    </div>`;
+    return;
+  }
+
+  // Try direct fetch first; if blocked (e.g. local file), fall back to CORS proxy
+  async function fetchCSV(url) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return res;
+    } catch(e) { /* fall through to proxy */ }
+    const proxy = 'https://corsproxy.io/?' + encodeURIComponent(url);
+    const res = await fetch(proxy);
+    if (res.ok) return res;
+    throw new Error('Could not reach the Google Sheet. Check that it is published as CSV.');
+  }
+
+  try {
+    const res = await fetchCSV(SHEET_CSV_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status} — check that the sheet is published as CSV.`);
+    const text = await res.text();
+    allMembers = parseCSV(text);
+
+    if (allMembers.length === 0) {
+      throw new Error('No data rows found. Check that your column headers match the expected names.');
+    }
+
+    buildFilters();
+
+    document.getElementById('search').addEventListener('input', populate);
+    document.getElementById('chapterFilter').addEventListener('change', populate);
+    document.getElementById('sortOrder').addEventListener('change', populate);
+
+    populate();
+  } catch (err) {
+    grid.innerHTML = `<div class="status-message error">
+      ⚠️ Could not load roster data.<br><br>
+      <span style="font-size:0.95rem;">${err.message}</span>
+    </div>`;
+    console.error('Sheet load error:', err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadData);
+</script>
+</body>
+</html>
