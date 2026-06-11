@@ -185,17 +185,27 @@
     transform: translateY(-2px);
   }
 
+  .card-photo-wrapper {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: linear-gradient(160deg, #EDE4CC 0%, #D4C4A0 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .card-photo {
     width: 100%;
-    height: 200px;
+    height: 100%;
     object-fit: cover;
-    object-position: top center;
+    object-position: center top;
     display: block;
   }
 
   .card-photo-placeholder {
     width: 100%;
-    height: 200px;
+    aspect-ratio: 1 / 1;
     background: linear-gradient(160deg, #EDE4CC 0%, #D4C4A0 100%);
     display: flex;
     align-items: center;
@@ -482,9 +492,10 @@ function buildCard(m) {
   const init        = initials(m);
 
   const photoHTML = hasPhoto
-    ? `<img class="card-photo" src="${m.photo}" alt="Photo of ${displayName}" loading="lazy"
-         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-      + `<div class="card-photo-placeholder" style="display:none"><div class="initials-circle">${init}</div></div>`
+    ? `<div class="card-photo-wrapper">
+         <img class="card-photo" src="${m.photo}" alt="Photo of ${displayName}" loading="lazy"
+           onerror="this.parentElement.innerHTML='<div class=\'initials-circle\'>${init}</div>'">
+       </div>`
     : `<div class="card-photo-placeholder"><div class="initials-circle">${init}</div></div>`;
 
   const rows = [];
