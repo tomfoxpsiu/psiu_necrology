@@ -445,6 +445,42 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS27pm05q
 
 let allMembers = [];
 
+// Convert a sheet date into a sortable number (milliseconds).
+// Handles "8/8/2025" and "12/13/1959" (US M/D/YYYY, the format Google Sheets
+// exports) as well as "2025-08-08" (ISO), in case the sheet format changes.
+// Returns null for blanks or anything unrecognizable.
+function parseDate(str) {
+  const s = (str || '').trim();
+  if (!s) return null;
+
+  // ISO: YYYY-MM-DD
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3]);
+
+  // US: M/D/YYYY or M-D-YYYY (also accepts 2-digit years)
+  m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if (m) {
+    let year = +m[3];
+    if (year < 100) year += year < 30 ? 2000 : 1900;
+    return Date.UTC(year, +m[1] - 1, +m[2]);
+  }
+
+  // Last resort: let the browser try (e.g. "January 4, 2024")
+  const t = Date.parse(s);
+  return isNaN(t) ? null : t;
+}
+
+// Escape sheet values before inserting them into HTML, so an ampersand, angle
+// bracket, or stray quote in a cell can't break a card's markup.
+function esc(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Build display name: full legal name + (Nickname) if present
 // e.g. "Dr. James Robert Williams Jr. (Jim)"
 function buildDisplayName(m) {
@@ -473,25 +509,49 @@ function initials(m) {
   return last ? first + last : first;
 }
 
-function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  if (lines.length < 2) return [];
+// Split CSV text into rows of fields. Scans the whole document character by
+// character rather than splitting on newlines first, so a cell containing a
+// line break (Alt+Enter in Google Sheets) doesn't split one member into two
+// rows. Also handles "" as an escaped double quote and CRLF line endings.
+function splitCSV(text) {
+  const rows = [];
+  let row = [], cur = '', inQuote = false;
 
-  // Parse a single CSV line respecting quoted fields
-  function parseLine(line) {
-    const cols = [];
-    let inQuote = false, cur = '';
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQuote = !inQuote; }
-      else if (ch === ',' && !inQuote) { cols.push(cur.trim()); cur = ''; }
-      else { cur += ch; }
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+
+    if (inQuote) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { cur += '"'; i++; }  // escaped quote
+        else inQuote = false;
+      } else {
+        cur += ch;
+      }
+      continue;
     }
-    cols.push(cur.trim());
-    return cols.map(c => c.replace(/^"|"$/g, '').trim());
+
+    if (ch === '"')       { inQuote = true; }
+    else if (ch === ',')  { row.push(cur); cur = ''; }
+    else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && text[i + 1] === '\n') i++;   // CRLF
+      row.push(cur); cur = '';
+      rows.push(row); row = [];
+    }
+    else { cur += ch; }
   }
 
-  const headers = parseLine(lines[0]).map(h => h.toLowerCase().trim());
+  row.push(cur);
+  rows.push(row);
+
+  // Drop trailing blank rows (Google pads the export with empty lines)
+  return rows.filter(r => r.some(c => c.trim() !== ''));
+}
+
+function parseCSV(text) {
+  const rows = splitCSV(text);
+  if (rows.length < 2) return [];
+
+  const headers = rows[0].map(h => h.toLowerCase().trim());
 
   function col(obj, ...keys) {
     for (const k of keys) {
@@ -501,10 +561,9 @@ function parseCSV(text) {
     return '';
   }
 
-  return lines.slice(1).map(line => {
-    const vals = parseLine(line);
+  return rows.slice(1).map(vals => {
     const obj = {};
-    headers.forEach((h, i) => { obj[h] = vals[i] || ''; });
+    headers.forEach((h, i) => { obj[h] = (vals[i] || '').trim(); });
 
     return {
       title:               col(obj, 'title'),
@@ -518,7 +577,6 @@ function parseCSV(text) {
       classYear:           col(obj, 'class', 'classyear', 'class year'),
       birthDate:           col(obj, 'birth date', 'birthdate', 'dob'),
       deceased:            col(obj, 'date deceased', 'datedeceased', 'deceased'),
-      deceasedISO:         col(obj, 'date deceased', 'datedeceased', 'deceased'),  // same field, used for sorting
       obituaryUrl:         col(obj, 'obit summary-equals obit link', 'obituaryurl', 'obit link', 'obituary link'),
       photo:               col(obj, 'obituary photo link', 'photo', 'photourl', 'photo link'),
       note:                col(obj, 'note', 'notes', 'tribute'),
@@ -533,22 +591,24 @@ function buildCard(m) {
   const hasObit     = m.obituaryUrl !== '';
   const init        = initials(m);
 
+  // The initials are stored in a data attribute; a post-render pass attaches the
+  // error handler in JS (an inline onerror can't safely carry quoted markup).
   const photoHTML = hasPhoto
     ? `<div class="card-photo-wrapper">
-         <img class="card-photo" src="${m.photo}" alt="Photo of ${displayName}" loading="lazy"
-           onerror="this.parentElement.innerHTML='<div class=\'initials-circle\'>${init}</div>'">
+         <img class="card-photo" src="${esc(m.photo)}" alt="Photo of ${esc(displayName)}"
+              loading="lazy" data-initials="${esc(init)}">
        </div>`
-    : `<div class="card-photo-placeholder"><div class="initials-circle">${init}</div></div>`;
+    : `<div class="card-photo-placeholder"><div class="initials-circle">${esc(init)}</div></div>`;
 
   const rows = [];
-  if (m.chapter)   rows.push(`<div class="card-meta-row"><span class="meta-label">Chapter</span><span class="meta-value">${m.chapter}</span></div>`);
-  if (m.classYear) rows.push(`<div class="card-meta-row"><span class="meta-label">Class</span><span class="meta-value">${m.classYear}</span></div>`);
-  if (m.birthDate) rows.push(`<div class="card-meta-row"><span class="meta-label">Born</span><span class="meta-value">${m.birthDate}</span></div>`);
-  if (m.deceased)  rows.push(`<div class="card-meta-row"><span class="meta-label">Passed</span><span class="meta-value">${m.deceased}</span></div>`);
+  if (m.chapter)   rows.push(`<div class="card-meta-row"><span class="meta-label">Chapter</span><span class="meta-value">${esc(m.chapter)}</span></div>`);
+  if (m.classYear) rows.push(`<div class="card-meta-row"><span class="meta-label">Class</span><span class="meta-value">${esc(m.classYear)}</span></div>`);
+  if (m.birthDate) rows.push(`<div class="card-meta-row"><span class="meta-label">Born</span><span class="meta-value">${esc(m.birthDate)}</span></div>`);
+  if (m.deceased)  rows.push(`<div class="card-meta-row"><span class="meta-label">Passed</span><span class="meta-value">${esc(m.deceased)}</span></div>`);
 
   const obitHTML = hasObit
     ? `<div class="divider"></div>
-       <a class="obit-link" href="${m.obituaryUrl}" target="_blank" rel="noopener">
+       <a class="obit-link" href="${esc(m.obituaryUrl)}" target="_blank" rel="noopener">
          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
            <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
@@ -557,20 +617,37 @@ function buildCard(m) {
        </a>` : '';
 
   const noteHTML = m.note
-    ? `<p style="font-family:'EB Garamond',serif;font-style:italic;font-size:0.92rem;color:var(--muted);margin-top:0.6rem;line-height:1.55;">"${m.note}"</p>`
+    ? `<p style="font-family:'EB Garamond',serif;font-style:italic;font-size:0.92rem;color:var(--muted);margin-top:0.6rem;line-height:1.55;">"${esc(m.note)}"</p>`
     : '';
 
   return `
     <article class="card" role="listitem">
       ${photoHTML}
       <div class="card-body">
-        <h2 class="card-name">${displayName}</h2>
-        ${m.chapter ? `<p class="card-chapter">${m.chapter}</p>` : ''}
+        <h2 class="card-name">${esc(displayName)}</h2>
+        ${m.chapter ? `<p class="card-chapter">${esc(m.chapter)}</p>` : ''}
         <div class="card-meta">${rows.join('')}</div>
         ${noteHTML}
         ${obitHTML}
       </div>
     </article>`;
+}
+
+// If an obituary photo fails to load (dead link, host blocks hotlinking, or the
+// image has been removed), swap in the gold initials circle instead of leaving
+// an empty box.
+function attachPhotoFallbacks(container) {
+  container.querySelectorAll('img.card-photo').forEach(img => {
+    const swap = () => {
+      const circle = document.createElement('div');
+      circle.className = 'initials-circle';
+      circle.textContent = img.dataset.initials || '';
+      if (img.parentElement) img.parentElement.replaceChildren(circle);
+    };
+    img.addEventListener('error', swap);
+    // Cached failures can fire before the listener is attached
+    if (img.complete && img.naturalWidth === 0) swap();
+  });
 }
 
 function populate() {
@@ -585,19 +662,33 @@ function populate() {
     return matchSearch && matchChapter;
   });
 
+  // Sort dates newest-first. Rows with a missing or unparseable date go last,
+  // regardless of sort direction, so blanks never float to the top.
+  function byDateDesc(a, b, field) {
+    const da = parseDate(a[field]);
+    const db = parseDate(b[field]);
+    if (da === null && db === null) return 0;
+    if (da === null) return 1;
+    if (db === null) return -1;
+    return db - da;
+  }
+
   filtered.sort((a, b) => {
     if (sort === 'name') {
       return (a.lastName||'').localeCompare(b.lastName||'') ||
              (a.firstName||'').localeCompare(b.firstName||'');
     }
-    if (sort === 'year')     return (a.classYear||'').localeCompare(b.classYear||'');
-    if (sort === 'deceased') return (b.deceasedISO||'0000-00-00').localeCompare(a.deceasedISO||'0000-00-00');
-    if (sort === 'notification') {
-      // Most recently notified first; blank notification dates go to the end
-      const na = a.notificationDate || '0000-00-00';
-      const nb = b.notificationDate || '0000-00-00';
-      return nb.localeCompare(na);
+    if (sort === 'year') {
+      // Numeric compare so "1945" sorts before "1981"; blanks go last
+      const ya = parseInt(a.classYear, 10);
+      const yb = parseInt(b.classYear, 10);
+      if (isNaN(ya) && isNaN(yb)) return 0;
+      if (isNaN(ya)) return 1;
+      if (isNaN(yb)) return -1;
+      return ya - yb;
     }
+    if (sort === 'deceased')     return byDateDesc(a, b, 'deceased');
+    if (sort === 'notification') return byDateDesc(a, b, 'notificationDate');
     return 0;
   });
 
@@ -612,6 +703,7 @@ function populate() {
 
   grid.innerHTML = filtered.map(buildCard).join('');
   label.textContent = `${filtered.length} member${filtered.length !== 1 ? 's' : ''}`;
+  attachPhotoFallbacks(grid);
 }
 
 function buildFilters() {
