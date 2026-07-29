@@ -89,6 +89,35 @@
     line-height: 1.7;
   }
 
+  .gift-button {
+    display: inline-block;
+    margin-top: 1.75rem;
+    padding: 0.85rem 2.1rem;
+    background: var(--gold);
+    color: #FFFDF7;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 3px;
+    border: 1px solid var(--gold);
+    transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  }
+
+  .gift-button:hover {
+    background: #6F5310;
+    border-color: #6F5310;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(139,105,20,0.28);
+  }
+
+  .gift-button:focus-visible {
+    outline: 2px solid var(--gold-light);
+    outline-offset: 3px;
+  }
+
   .controls {
     max-width: 1100px;
     margin: 2rem auto 0;
@@ -361,6 +390,9 @@
   <blockquote>
     "Though they are gone, they are not forgotten — their fellowship endures in the bonds of our brotherhood."
   </blockquote>
+  <a class="gift-button"
+     href="https://give.psiu.org/give/557088#!/donation/checkout"
+     target="_blank" rel="noopener">Make a Memorial Gift</a>
 </div>
 
 <div class="controls">
@@ -416,10 +448,20 @@ let allMembers = [];
 // Build display name: full legal name + (Nickname) if present
 // e.g. "Dr. James Robert Williams Jr. (Jim)"
 function buildDisplayName(m) {
-  const parts = [m.title, m.firstName, m.middleName, m.lastName, m.suffix]
+  // Title through last name join with normal spaces
+  let name = [m.title, m.firstName, m.middleName, m.lastName]
     .map(p => (p || '').trim())
-    .filter(Boolean);
-  let name = parts.join(' ');
+    .filter(Boolean)
+    .join(' ');
+
+  // Suffix: sheet values may be stored as ", Jr." / ", MD" / "III".
+  // If the suffix already begins with a comma, attach it directly (no space
+  // before the comma); otherwise separate it with a space.
+  const suffix = (m.suffix || '').trim().replace(/\s+/g, ' ');
+  if (suffix) {
+    name += /^,/.test(suffix) ? suffix : ' ' + suffix;
+  }
+
   if (m.nickname) name += ` (${m.nickname})`;
   return name;
 }
