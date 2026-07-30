@@ -117,11 +117,13 @@
   .epigraph blockquote {
     font-family: 'EB Garamond', serif;
     font-style: italic;
-    font-size: 1.2rem;
+    /* Fluid, and deliberately capped well under header h1's
+       clamp(2rem, 5vw, 3.2rem) so it never competes with "In Memoriam". */
+    font-size: clamp(1.35rem, 2.6vw, 1.7rem);
     color: var(--muted);
-    max-width: 560px;
+    max-width: 640px;
     margin: 0 auto;
-    line-height: 1.7;
+    line-height: 1.6;
   }
 
 
@@ -161,7 +163,9 @@
     outline-offset: 3px;
   }
 
-  /* Secondary button — outlined, so the memorial gift stays the primary action */
+  /* Both secondary buttons share one style so they read as a matched pair.
+     The gift button above stays solid gold as the single primary action. */
+  .report-button,
   .return-button {
     display: inline-block;
     padding: 0.85rem 2.1rem;
@@ -174,16 +178,18 @@
     text-transform: uppercase;
     text-decoration: none;
     border-radius: 3px;
-    border: 1px solid var(--rule);
-    transition: background-color 0.2s, border-color 0.2s, transform 0.15s;
+    border: 1px solid var(--gold);
+    transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
   }
 
+  .report-button:hover,
   .return-button:hover {
-    background: rgba(139, 105, 20, 0.07);
-    border-color: var(--gold);
+    background: rgba(139, 105, 20, 0.1);
     transform: translateY(-1px);
+    box-shadow: 0 3px 12px rgba(139, 105, 20, 0.16);
   }
 
+  .report-button:focus-visible,
   .return-button:focus-visible {
     outline: 2px solid var(--gold-light);
     outline-offset: 3px;
@@ -278,6 +284,31 @@
     transition: box-shadow 0.25s, transform 0.2s;
     display: flex;
     flex-direction: column;
+    position: relative;
+  }
+
+  /* Featured entries get a gold frame and a corner badge. The badge is a child
+     of .card rather than of the photo box, so the broken-image fallback can
+     replace the photo without destroying it. */
+  .card.is-featured {
+    border-color: var(--gold-light);
+    box-shadow: 0 2px 12px rgba(139, 105, 20, 0.14);
+  }
+
+  .featured-badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    background: var(--gold);
+    color: #FFFDF7;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 0.34rem 0.7rem;
+    border-bottom-right-radius: 4px;
   }
 
   .card:hover {
@@ -389,6 +420,19 @@
 
   .divider { height: 1px; background: #EDE4CC; margin: 1rem 0 0.9rem; }
 
+  /* Awards, distinctions, board service — free text from the notes column.
+     No quotation marks, since this isn't a quotation. */
+  .card-note {
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--gold);
+    margin-top: 0.75rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid #EDE4CC;
+    line-height: 1.5;
+  }
+
   .obit-link {
     display: inline-flex;
     align-items: center;
@@ -456,11 +500,11 @@
     .count-label { margin-left: 0; }
     header::before { width: 300px; height: 321px; opacity: 0.6; }
     .greek-letters { letter-spacing: 0.2em; font-size: 0.82rem; }
-    .epigraph blockquote { font-size: 1.05rem; }
+    .epigraph blockquote { font-size: 1.2rem; }
     .grid { padding: 0 1rem; }
     header, .epigraph { padding-left: 1.25rem; padding-right: 1.25rem; }
     .button-row { flex-direction: column; align-items: stretch; }
-    .gift-button, .return-button { text-align: center; }
+    .gift-button, .report-button, .return-button { text-align: center; }
   }
 </style>
 </head>
@@ -474,12 +518,15 @@
 
 <div class="epigraph">
   <blockquote>
-    "Though they are gone, they are not forgotten — their fellowship endures in the bonds of our brotherhood."
+    &ldquo;With sore &amp; stricken hearts we mourn, today a brother fell&hellip;&rdquo;
   </blockquote>
   <div class="button-row">
     <a class="gift-button"
        href="https://give.psiu.org/give/557088#!/donation/checkout"
        target="_blank" rel="noopener">Make a Memorial Gift</a>
+    <a class="report-button"
+       href="https://psiu.wufoo.com/forms/farewell-parting/"
+       target="_blank" rel="noopener">Report a Brother&rsquo;s Passing</a>
     <a class="return-button" href="https://psiu.org/">Return to psiu.org</a>
   </div>
 </div>
@@ -562,6 +609,13 @@ function parseDate(str) {
   // Last resort: let the browser try (e.g. "January 4, 2024")
   const t = Date.parse(s);
   return isNaN(t) ? null : t;
+}
+
+// Anything in the Featured column pins the entry, except an explicit negative.
+function isFeatured(v) {
+  const s = String(v == null ? '' : v).trim().toLowerCase();
+  if (!s) return false;
+  return !['no', 'n', 'false', '0', 'none', '-'].includes(s);
 }
 
 // A URL pasted without a protocol ("www.legacy.com/...") would otherwise be
@@ -677,7 +731,11 @@ function parseCSV(text) {
       deceased:            col(obj, 'date deceased', 'datedeceased', 'deceased'),
       obituaryUrl:         normalizeUrl(col(obj, 'obit summary-equals obit link', 'obituaryurl', 'obit link', 'obituary link')),
       photo:               normalizeUrl(col(obj, 'obituary photo link', 'photo', 'photourl', 'photo link')),
-      note:                col(obj, 'note', 'notes', 'tribute'),
+      featured:            isFeatured(col(obj, 'featured', 'feature', 'pinned', 'pin', 'vip')),
+      note:                col(obj, 'note', 'notes', 'tribute',
+                                'distinctions', 'distinction', 'honors', 'honours',
+                                'awards', 'award', 'recognition', 'recognitions',
+                                'additional information', 'additional info'),
       notificationDate:    col(obj, 'deceased notification', 'deceasednotification', 'notification'),  // internal, drives sort
     };
   }).filter(m => m.firstName || m.lastName);
@@ -715,11 +773,12 @@ function buildCard(m) {
        </a>` : '';
 
   const noteHTML = m.note
-    ? `<p style="font-family:'EB Garamond',serif;font-style:italic;font-size:0.92rem;color:var(--muted);margin-top:0.6rem;line-height:1.55;">"${esc(m.note)}"</p>`
+    ? `<p class="card-note">${esc(m.note)}</p>`
     : '';
 
   return `
-    <article class="card" role="listitem">
+    <article class="card${m.featured ? ' is-featured' : ''}" role="listitem">
+      ${m.featured ? '<span class="featured-badge">Featured</span>' : ''}
       ${photoHTML}
       <div class="card-body">
         <h2 class="card-name">${esc(displayName)}</h2>
@@ -747,14 +806,31 @@ function attachPhotoFallbacks(container) {
   });
 }
 
+// Fold a name or query into a comparable form so punctuation and accents don't
+// block a match: typing "odonnell" should find "O'Donnell", "sainte" should find
+// "Sainté", "smithjones" should find "Smith-Jones".
+function searchKey(str) {
+  return String(str || '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')   // strip accents
+    .replace(/[\u2019'`.\-,]/g, '')    // strip apostrophes, periods, hyphens, commas
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function populate() {
-  const search  = document.getElementById('search').value.toLowerCase().trim();
+  // Split into words and require all of them, so "john spencer" finds
+  // "John H. Spencer, Jr." even with the middle initial in between.
+  const terms   = searchKey(document.getElementById('search').value).split(' ').filter(Boolean);
   const chapter = document.getElementById('chapterFilter').value;
   const sort    = document.getElementById('sortOrder').value;
 
   let filtered = allMembers.filter(m => {
-    const fullName     = buildDisplayName(m).toLowerCase();
-    const matchSearch  = !search || fullName.includes(search) || (m.chapter||'').toLowerCase().includes(search);
+    // Name only — the display name already includes any nickname in parentheses.
+    // Chapter is deliberately excluded here; the dropdown filter covers it.
+    const nameKey      = searchKey(buildDisplayName(m));
+    const matchSearch  = terms.every(t => nameKey.includes(t));
     const matchChapter = !chapter || m.chapter === chapter;
     return matchSearch && matchChapter;
   });
@@ -771,6 +847,9 @@ function populate() {
   }
 
   filtered.sort((a, b) => {
+    // Featured entries pin to the top in every sort mode — but not while a
+    // search is running, where results should stay in plain sorted order.
+    if (!terms.length && a.featured !== b.featured) return a.featured ? -1 : 1;
     if (sort === 'name') {
       return (a.lastName||'').localeCompare(b.lastName||'') ||
              (a.firstName||'').localeCompare(b.firstName||'');
